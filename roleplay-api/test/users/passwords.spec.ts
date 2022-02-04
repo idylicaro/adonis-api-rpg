@@ -7,7 +7,7 @@ import supertest from 'supertest'
 const BASE_URL = `http://${process.env.HOST}:${process.env.PORT}`
 
 test.group('Password', (group) => {
-  test('it should send and email with forgot password instructions', async (assert) => {
+  test('it should send an email with forgot password instructions', async (assert) => {
     const user = await UserFactory.create()
     Mail.trap((message) => {
       assert.deepEqual(message.to, [{ address: user.email }])

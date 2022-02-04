@@ -40,7 +40,12 @@ test.group('Password', (group) => {
     assert.isNotEmpty(tokens)
   }).timeout(3000)
 
-  //test('', async (assert) => {})
+  test('it should return 422 when required data is not provided or data is invalid', async (assert) => {
+    const { body } = await supertest(BASE_URL).post('/forgot-password').send().expect(422)
+
+    assert.equal(body.code, 'BAD_REQUEST')
+    assert.equal(body.status, 422)
+  }).timeout(3000)
 
   group.beforeEach(async () => {
     await Database.beginGlobalTransaction()

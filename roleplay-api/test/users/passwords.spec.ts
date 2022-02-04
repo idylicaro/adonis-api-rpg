@@ -48,8 +48,28 @@ test.group('Password', (group) => {
     assert.equal(body.status, 422)
   }).timeout(3000)
 
+  test('it should be able to reset password', async (assert) => {
+    const user = await UserFactory.create()
+    const { token } = await user.related('tokens').create({ token: 'token' })
+    await supertest(BASE_URL)
+      .post('/reset-password')
+      .send({ token, password: '123456' })
+      .expect(204)
+
+    await user.refresh()
+    const checkPassword = await Hash.verify(user.password, '123456')
+    assert.isTrue(checkPassword)
+  }).timeout(3000)
+
+  test('it should return 422 when required data is not provided or data is invalid', async (assert) => {
+    const { body } = await supertest(BASE_URL).post('/reset-password').send().expect(422)
+
+    assert.equal(body.code, 'BAD_REQUEST')
+    assert.equal(body.status, 422)
+  }).timeout(3000)
+
   test
-    .only('it should be able to reset password', async (assert) => {
+    .only('it should return 404 when using the same token twice', async (assert) => {
       const user = await UserFactory.create()
       const { token } = await user.related('tokens').create({ token: 'token' })
       await supertest(BASE_URL)
@@ -57,9 +77,13 @@ test.group('Password', (group) => {
         .send({ token, password: '123456' })
         .expect(204)
 
-      await user.refresh()
-      const checkPassword = await Hash.verify(user.password, '123456')
-      assert.isTrue(checkPassword)
+      const { body } = await supertest(BASE_URL)
+        .post('/reset-password')
+        .send({ token, password: '123456' })
+        .expect(404)
+
+      assert.equal(body.code, 'BAD_REQUEST')
+      assert.equal(body.status, 404)
     })
     .timeout(3000)
 

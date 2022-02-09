@@ -6,4 +6,9 @@ export default class SessionsController {
     const token = await auth.use('api').attempt(email, password, { expiresIn: '2hours' })
     response.created({ user: auth.user, token })
   }
+
+  public async destroy({ request, response, auth }: HttpContextContract) {
+    await auth.logout()
+    return response.ok({})
+  }
 }

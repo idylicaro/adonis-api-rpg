@@ -118,7 +118,7 @@ test.group('Group Request', (group) => {
     assert.equal(body.status, 422)
   })
 
-  test.only('it should accept a group request', async (assert) => {
+  test('it should accept a group request', async (assert) => {
     const master = await UserFactory.create()
     const group = await GroupFactory.merge({ master: master.id }).create()
 
@@ -135,6 +135,11 @@ test.group('Group Request', (group) => {
     assert.equal(response.body.groupRequest.userId, user.id)
     assert.equal(response.body.groupRequest.groupId, group.id)
     assert.equal(response.body.groupRequest.status, 'ACCEPTED')
+
+    await group.load('players')
+    assert.isNotEmpty(group.players)
+    assert.equal(group.players.length, 1)
+    assert.equal(group.players[0].id, user.id)
   })
 
   group.before(async () => {

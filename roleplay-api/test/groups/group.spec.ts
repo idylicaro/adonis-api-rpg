@@ -4,6 +4,8 @@ import { UserFactory } from 'Database/factories'
 import test from 'japa'
 import supertest from 'supertest'
 const BASE_URL = `http://${process.env.HOST}:${process.env.PORT}`
+let apiToken = ''
+let user = {} as User
 
 test.group('Group', (group) => {
   test('it should create a group', async (assert) => {
@@ -16,7 +18,12 @@ test.group('Group', (group) => {
       chronic: 'test',
       master: user.id,
     }
-    const { body } = await supertest(BASE_URL).post('/groups').send(groupPayload).expect(201)
+    const { body } = await supertest(BASE_URL)
+      .post('/groups')
+      .set('Authorization', `Bearer ${apiToken}`)
+      .send(groupPayload)
+      .expect(201)
+
     assert.exists(body.group, 'Group undefined')
     assert.equal(body.group.name, groupPayload.name)
     assert.equal(body.group.description, groupPayload.description)
@@ -29,9 +36,30 @@ test.group('Group', (group) => {
     assert.equal(body.group.players[0].id, groupPayload.master)
   })
   test('it should return 422 when required data is not provided', async (assert) => {
-    const { body } = await supertest(BASE_URL).post('/groups').send({}).expect(422)
+    const { body } = await supertest(BASE_URL)
+      .post('/groups')
+      .set('Authorization', `Bearer ${apiToken}`)
+      .send({})
+      .expect(422)
+
     assert.equal(body.code, 'BAD_REQUEST')
     assert.equal(body.status, 422)
+  })
+
+  group.before(async () => {
+    const plainPassword = 'test'
+    const newUser = await UserFactory.merge({ password: plainPassword }).create()
+    const { body } = await supertest(BASE_URL)
+      .post('/sessions')
+      .send({ email: newUser.email, password: plainPassword })
+      .expect(201)
+
+    apiToken = body.token.token
+    user = newUser
+  })
+
+  group.after(async () => {
+    await supertest(BASE_URL).delete('/sessions').set('Authorization', `Bearer ${apiToken}`)
   })
 
   group.beforeEach(async () => {

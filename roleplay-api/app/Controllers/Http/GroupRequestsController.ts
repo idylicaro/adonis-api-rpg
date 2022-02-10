@@ -60,6 +60,9 @@ export default class GroupRequestsController {
 
     const updatedGroupRequest = await groupRequest.merge({ status: 'ACCEPTED' }).save()
 
+    await groupRequest.load('group')
+    await groupRequest.group.related('players').attach([groupRequest.userId])
+
     response.ok({ groupRequest: updatedGroupRequest })
   }
 }

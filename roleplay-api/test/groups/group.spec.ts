@@ -130,6 +130,38 @@ test.group('Group', (group) => {
     assert.isNotEmpty(groupModel.players)
   })
 
+  test('it should remove the group', async (assert) => {
+    const user = await UserFactory.create()
+    const groupPayload = {
+      name: 'test',
+      description: 'test',
+      schedule: 'test',
+      location: 'test',
+      chronic: 'test',
+      master: user.id,
+    }
+    const { body } = await supertest(BASE_URL)
+      .post('/groups')
+      .set('Authorization', `Bearer ${apiToken}`)
+      .send(groupPayload)
+
+    const group = body.group
+
+    await supertest(BASE_URL).delete(`/groups/${group.id}`).send({}).expect(200)
+
+    const emptyGroup = await Database.query().from('groups').where('id', group.id)
+    assert.isEmpty(emptyGroup)
+
+    const players = await Database.query().from('groups_users')
+    assert.isEmpty(players)
+  })
+
+  test('it should return 404 when providing an unexisting group for deletion', async (assert) => {
+    const { body } = await supertest(BASE_URL).delete(`/groups/1`).send({}).expect(404)
+    assert.equal(body.code, 'BAD_REQUEST')
+    assert.equal(body.status, 404)
+  })
+
   group.before(async () => {
     const plainPassword = 'test'
     const newUser = await UserFactory.merge({ password: plainPassword }).create()

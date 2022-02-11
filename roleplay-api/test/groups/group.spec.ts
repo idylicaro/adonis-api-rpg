@@ -46,7 +46,7 @@ test.group('Group', (group) => {
     assert.equal(body.status, 422)
   })
 
-  test.only('it should update a group', async (assert) => {
+  test('it should update a group', async (assert) => {
     const master = await UserFactory.create()
     const group = await GroupFactory.merge({ master: master.id }).create()
     const groupPayload = {
@@ -71,8 +71,8 @@ test.group('Group', (group) => {
     assert.equal(body.group.chronic, groupPayload.chronic)
   })
 
-  test.only('it should return 404 when providing an unexisting group for update', async (assert) => {
-    const { body } = await supertest(BASE_URL).patch('groups/1').send({}).expect(404)
+  test('it should return 404 when providing an unexisting group for update', async (assert) => {
+    const { body } = await supertest(BASE_URL).patch('/groups/1').send({}).expect(404)
 
     assert.equal(body.code, 'BAD_REQUEST')
     assert.equal(body.status, 404)

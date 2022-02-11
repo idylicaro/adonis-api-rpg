@@ -78,6 +78,32 @@ test.group('Group', (group) => {
     assert.equal(body.status, 404)
   })
 
+  test.only('it should remove user from group', async (assert) => {
+    const group = await GroupFactory.merge({ master: user.id }).create()
+
+    const newUser = await UserFactory.merge({ password: 'test123' }).create()
+    const response = await supertest(BASE_URL)
+      .post('/sessions')
+      .send({ email: newUser.email, password: 'test123' })
+
+    const playerToken = response.body.token.token
+
+    const { body } = await supertest(BASE_URL)
+      .post(`/groups/${group.id}/requests`)
+      .set('Authorization', `Bearer ${playerToken}`)
+      .send({})
+
+    await supertest(BASE_URL)
+      .post(`/groups/${group.id}/requests/${body.groupRequest.id}/accept`)
+      .set('Authorization', `Bearer ${apiToken}`)
+      .expect(200)
+
+    await supertest(BASE_URL).delete(`/groups/${group.id}/players/${newUser.id}`).expect(200)
+
+    await group.load('players')
+    assert.isEmpty(group.players)
+  })
+
   group.before(async () => {
     const plainPassword = 'test'
     const newUser = await UserFactory.merge({ password: plainPassword }).create()

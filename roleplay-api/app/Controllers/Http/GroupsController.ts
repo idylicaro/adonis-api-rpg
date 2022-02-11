@@ -34,4 +34,12 @@ export default class GroupsController {
 
     return response.ok({})
   }
+
+  public async destroy({ request, response }: HttpContextContract) {
+    const id = request.param('id')
+
+    const group = await Group.findOrFail(id)
+    await group.delete()
+    return response.ok({})
+  }
 }
